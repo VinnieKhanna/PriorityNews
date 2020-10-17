@@ -18,24 +18,34 @@ from inscriptis import get_text
 newsapi = NewsApiClient(api_key='fb11d84c123e491983028590e5bdd0e6')
 
 # /v2/top-headlines
-top_headlines = newsapi.get_top_headlines(country='au',
-                                          page_size=10,
-                                          category='general')
+health_headlines = newsapi.get_top_headlines(country='au',
+                                          page_size=70, page=1, category='health')
+general_headlines = newsapi.get_top_headlines(country='au',
+                                          page_size=70, page=1, category='general')
+
 
 # /v2/everything
-all_articles = newsapi.get_everything(q='politics',
-                                      from_param=date.today(),
-                                      language='en', page_size=10, page=2)
-
-# /v2/sources
-sources = newsapi.get_sources()
-
+# all_articles = newsapi.get_everything(q='politics',
+#                                       from_param=date.today(),
+#                                       language='en', page_size=10, page=2)
+#
+# # /v2/sources
+# sources = newsapi.get_sources()
 #print(json.dumps(all_articles, indent=6))
 
-sd = SortedDict()
 
-for article in all_articles['articles']:
-    print(article['url'])
+sd = SortedDict()
+newsList = []    #actual unordered return list
+
+print("# Health Articles: " + str(health_headlines['totalResults']))
+print("# General Articles: " + str(general_headlines['totalResults']))
+
+all_headlines = health_headlines['articles'] + general_headlines['articles']
+i = 0
+
+for article in all_headlines:
+    i += 1
+    print(str(i) + ". " + article['url'])
     url = Request(article['url'], headers={'User-Agent': 'Mozilla/5.0'})
 
     html = None
@@ -46,6 +56,13 @@ for article in all_articles['articles']:
 
     if "nytimes" in article['url'] or "wsj" in article['url']:
         continue
+
+    if article['url'] not in newsList:
+        newsList.append(article['url'])
+    else:
+        continue
+
+
     soup = BeautifulSoup(html, "html.parser")
     decoding = soup.original_encoding
 
@@ -66,19 +83,20 @@ for article in all_articles['articles']:
     readingStats = readability.getmeasures(text, lang='en')
     fleschScore = readingStats['readability grades']['FleschReadingEase']
 
-
     sd[fleschScore] = article['url']
 
+i = 1
 
-print("length" + str(len(sd.keys())))
+print("\nlength: " + str(len(sd.keys())))
 for key in sd:
-    print (sd[key] + ": " + str(key))
+    print(str(i) + ". " + sd[key] + ": " + str(key))
+    i += 1
 
-print("\nAustralian Specific:\n")
-for article in top_headlines['articles']:
-    print(article['url'])
-    # print(article['urlToImage'])
-print(top_headlines['totalResults'])
+
+print("result lengths:")
+print(len(all_headlines))
+print(len(newsList))
+
 
 
 
