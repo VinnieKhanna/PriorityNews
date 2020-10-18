@@ -54,7 +54,7 @@ for article in all_headlines:
     except OSError:
         continue
 
-    if "nytimes" in article['url'] or "wsj" in article['url']:
+    if "nytimes" in article['url'] or "wsj" in article['url'] or "news.google.com" in article['url']:
         continue
 
     if [article['url'], article['publishedAt']] not in newsList:
@@ -97,7 +97,7 @@ print("result lengths:")
 print(len(all_headlines))
 print(len(newsList))
 for news in newsList:
-    print("URL: " + news[0] + "Date: " + news[1])
+    print("URL: " + news[0] + " |Date: " + news[1])
 
 
 
