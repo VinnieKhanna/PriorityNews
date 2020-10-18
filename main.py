@@ -13,16 +13,16 @@ from bs4 import BeautifulSoup
 from sortedcontainers import SortedDict
 from inscriptis import get_text
 import pandas as pd
-import Article
+#import Article
 
 # Init
 newsapi = NewsApiClient(api_key='fb11d84c123e491983028590e5bdd0e6')
 
 # /v2/top-headlines
 health_headlines = newsapi.get_top_headlines(country='au',
-                                          page_size=1, page=1, category='health')
+                                          page_size=70, page=1, category='health')
 general_headlines = newsapi.get_top_headlines(country='au',
-                                          page_size=1, page=1, category='general')
+                                          page_size=70, page=1, category='general')
 
 
 # /v2/everything
@@ -86,7 +86,7 @@ for article in all_headlines:
 
     sd[fleschScore] = article['url']
 
-    newArticle = Article.Article(article['url'], article['publishedAt'], fleschScore)
+    newArticle = Article(article['url'], article['publishedAt'], fleschScore)
 
     if newArticle not in newsList:
         newsList.append(newArticle)
@@ -96,17 +96,17 @@ for article in all_headlines:
 
 i = 1
 
-print("\nlength: " + str(len(sd.keys())))
-for key in sd:
-    print(str(i) + ". " + sd[key] + ": " + str(key))
-    i += 1
+#print("\nlength: " + str(len(sd.keys())))
+#for key in sd:
+    #print(str(i) + ". " + sd[key] + ": " + str(key))
+    #i += 1
 
 
-print("result lengths:")
-print(len(all_headlines))
-print(len(newsList))
-for news in newsList:
-    print("URL: " + news.url + " |Date: " + news.publishedAt + " |Readability: " + str(news.readabilityScore))
+#print("result lengths:")
+#print(len(all_headlines))
+# print(len(newsList))
+#for news in newsList:
+    #print("URL: " + news.url + " |Date: " + news.publishedAt + " |Readability: " + str(news.readabilityScore))
 
 # url_list = pd.Series(urlList, name='url')
 # text_list = pd.Series(textList, name='article_text')
@@ -114,19 +114,43 @@ for news in newsList:
 # df = pd.merge(url_list, text_list, left_index=True, right_index=True)
 # df.to_csv('article_ranking_data.csv')
 
-print(textList[1])
+# print(textList[1])
 # print(datetime.datetime.utcnow())
 # print(newsList[0].timeSincePublished)
 # print(newsList[1].timeSincePublished)
 
+#url_list = pd.Series(urlList, name='url')
+ranked_articles = pd.DataFrame(textList)
+
+#ranked_articles = pd.merge(url_list, text_list, left_index=True, right_index=True)
+#ranked_articles.to_csv('article_ranking_data_2.csv')
+
+texts = ranked_articles.iloc[:, 0]
+docs = [nlp.tokenizer(text) for text in texts]
+
+# Use textcat to get the scores for each doc
+textcat = nlp.get_pipe('textcat')
+scores, _ = textcat.predict(docs)
+#print(scores)
+
+# From the scores, find the label with the highest score/probability
+predicted_labels = scores.argmax(axis=1)
+print([textcat.labels[label] for label in predicted_labels])
+
+for i in range(len(newsList)):
+    newsList[i].setRealProb(scores[i][0])
+
 for news in newsList:
-    None#news.setRealProb(raj your values here you sweet honeysuckle) will probably need to use relative indices
-for news in newsList:
-    None#if prob at this index out of range: newsList.remove(news)
+    if news.realProb < .001:
+        newsList.remove(news)
 
 for news in newsList:
     news.equateRank()
-    print(news.rankScore)
-
+    
+newsList.sort(key=lambda newsArticle: newsArticle.rankScore, reverse=True)
+j = 1
+for news in newsList:
+    print(str(j) + '. URL: ' + news.url + '\nScore: ' + str(news.rankScore))
+    j = j + 1
 
 
