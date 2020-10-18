@@ -120,7 +120,13 @@ print(textList[1])
 # print(newsList[1].timeSincePublished)
 
 for news in newsList:
+    None#news.setRealProb(raj your values here you sweet honeysuckle) will probably need to use relative indices
+for news in newsList:
+    None#if prob at this index out of range: newsList.remove(news)
+
+for news in newsList:
     news.equateRank()
+    print(news.rankScore)
 
 
 
