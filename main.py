@@ -13,6 +13,7 @@ from bs4 import BeautifulSoup
 from sortedcontainers import SortedDict
 from inscriptis import get_text
 import pandas as pd
+import Article
 
 # Init
 newsapi = NewsApiClient(api_key='fb11d84c123e491983028590e5bdd0e6')
@@ -37,7 +38,7 @@ general_headlines = newsapi.get_top_headlines(country='au',
 sd = SortedDict()
 newsList = []    #actual unordered return list
 textList = []
-urlList = []
+
 
 print("# Health Articles: " + str(health_headlines['totalResults']))
 print("# General Articles: " + str(general_headlines['totalResults']))
@@ -59,31 +60,38 @@ for article in all_headlines:
     if "nytimes" in article['url'] or "wsj" in article['url'] or "news.google.com" in article['url'] or "subscribe" in article['url']:
         continue
 
-    if [article['url'], article['publishedAt']] not in newsList:
-        newsList.append([article['url'], article['publishedAt']])
-        urlList.append(article['url'])
-    else:
-        continue
-
-
     soup = BeautifulSoup(html, "html.parser")
     decoding = soup.original_encoding
 
     decoded = urlopen(url).read().decode(decoding)
     text = get_text(decoded)
-    textList.append(text)
 
+    if len(text) < 100:
+        continue
 
-    # print(text)
+    newText = text.replace('*', '').replace('+', '')
+    if len(text) > 10000:
+        newText = newText[4000:len(newText) - 4000]
+    elif len(text) > 5000:
+        newText = newText[2000:len(newText) - 2000]
+    elif len(text) > 2000:
+        newText = newText[800:len(newText) - 800]
+    elif len(text) > 1000:
+        newText = newText[400:len(newText) - 400]
 
-    # url = Request(article['url'], headers={'User-Agent': 'Mozilla/5.0'})
-    # html = urlopen(url).read()
-    # beautify = BeautifulSoup(html, "html.parser")
-    #
-    # specificEncoding = beautify.original_encoding
-    # articleText = beautify.decode(specificEncoding)
-    #
-    # txt = articleText.get_text()
+    textList.append(newText)
+
+    readingStats = readability.getmeasures(text, lang='en')
+    fleschScore = readingStats['readability grades']['FleschReadingEase']
+
+    sd[fleschScore] = article['url']
+
+    newArticle = Article.Article(article['url'], article['publishedAt'], fleschScore)
+
+    if newArticle not in newsList:
+        newsList.append(newArticle)
+    else:
+        continue
 
     readingStats = readability.getmeasures(text, lang='en')
     fleschScore = readingStats['readability grades']['FleschReadingEase']
@@ -102,15 +110,15 @@ print("result lengths:")
 print(len(all_headlines))
 print(len(newsList))
 for news in newsList:
-    print("URL: " + news[0] + " |Date: " + news[1])
+    print("URL: " + news.url + " |Date: " + news.publishedAt + " |Readability: " + str(news.readabilityScore))
 
-url_list = pd.Series(urlList, name='url')
-text_list = pd.Series(textList, name='article_text')
+# url_list = pd.Series(urlList, name='url')
+# text_list = pd.Series(textList, name='article_text')
+#
+# df = pd.merge(url_list, text_list, left_index=True, right_index=True)
+# df.to_csv('article_ranking_data.csv')
 
-df = pd.merge(url_list, text_list, left_index=True, right_index=True)
-df.to_csv('article_ranking_data.csv')
-
-
+print(textList[1])
 
 
 
