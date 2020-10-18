@@ -57,8 +57,8 @@ for article in all_headlines:
     if "nytimes" in article['url'] or "wsj" in article['url']:
         continue
 
-    if article['url'] not in newsList:
-        newsList.append(article['url'])
+    if [article['url'], article['publishedAt']] not in newsList:
+        newsList.append([article['url'], article['publishedAt']])
     else:
         continue
 
@@ -96,6 +96,8 @@ for key in sd:
 print("result lengths:")
 print(len(all_headlines))
 print(len(newsList))
+for news in newsList:
+    print("URL: " + news[0] + "Date: " + news[1])
 
 
 
