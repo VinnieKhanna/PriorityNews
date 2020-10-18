@@ -2,7 +2,7 @@
 # Press Shift+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 
-from datetime import date
+import datetime
 import readability
 import json
 from newsapi import NewsApiClient
@@ -93,10 +93,6 @@ for article in all_headlines:
     else:
         continue
 
-    readingStats = readability.getmeasures(text, lang='en')
-    fleschScore = readingStats['readability grades']['FleschReadingEase']
-
-    sd[fleschScore] = article['url']
 
 i = 1
 
@@ -119,7 +115,12 @@ for news in newsList:
 # df.to_csv('article_ranking_data.csv')
 
 print(textList[1])
+# print(datetime.datetime.utcnow())
+# print(newsList[0].timeSincePublished)
+# print(newsList[1].timeSincePublished)
 
+for news in newsList:
+    news.equateRank()
 
 
 
