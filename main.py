@@ -12,16 +12,16 @@ from urllib import error
 from bs4 import BeautifulSoup
 from sortedcontainers import SortedDict
 from inscriptis import get_text
-
+import pandas as pd
 
 # Init
 newsapi = NewsApiClient(api_key='fb11d84c123e491983028590e5bdd0e6')
 
 # /v2/top-headlines
 health_headlines = newsapi.get_top_headlines(country='au',
-                                          page_size=70, page=1, category='health')
+                                          page_size=1, page=1, category='health')
 general_headlines = newsapi.get_top_headlines(country='au',
-                                          page_size=70, page=1, category='general')
+                                          page_size=1, page=1, category='general')
 
 
 # /v2/everything
@@ -36,6 +36,8 @@ general_headlines = newsapi.get_top_headlines(country='au',
 
 sd = SortedDict()
 newsList = []    #actual unordered return list
+textList = []
+urlList = []
 
 print("# Health Articles: " + str(health_headlines['totalResults']))
 print("# General Articles: " + str(general_headlines['totalResults']))
@@ -54,11 +56,12 @@ for article in all_headlines:
     except OSError:
         continue
 
-    if "nytimes" in article['url'] or "wsj" in article['url'] or "news.google.com" in article['url']:
+    if "nytimes" in article['url'] or "wsj" in article['url'] or "news.google.com" in article['url'] or "subscribe" in article['url']:
         continue
 
     if [article['url'], article['publishedAt']] not in newsList:
         newsList.append([article['url'], article['publishedAt']])
+        urlList.append(article['url'])
     else:
         continue
 
@@ -68,6 +71,8 @@ for article in all_headlines:
 
     decoded = urlopen(url).read().decode(decoding)
     text = get_text(decoded)
+    textList.append(text)
+
 
     # print(text)
 
@@ -99,6 +104,11 @@ print(len(newsList))
 for news in newsList:
     print("URL: " + news[0] + " |Date: " + news[1])
 
+url_list = pd.Series(urlList, name='url')
+text_list = pd.Series(textList, name='article_text')
+
+df = pd.merge(url_list, text_list, left_index=True, right_index=True)
+df.to_csv('article_ranking_data.csv')
 
 
 
